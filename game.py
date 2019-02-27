@@ -27,7 +27,7 @@ class Game():
 		#1440x900 = 180x113 tiles(1x), 90x57(2x), 60x38(3x), 45x29(4x)
 		#1920x1080 = 240x135 tiles
 
-		self.frameTileWidth, self.frameTileHeight = 16, 8
+		self.frameTileWidth, self.frameTileHeight = 90, 56
 		self.spriteResolution = 8
 		self.frameScale = 2
 		self.frameWidth, self.frameHeight = self.frameTileWidth*self.spriteResolution*self.frameScale, self.frameTileHeight*self.spriteResolution*self.frameScale
@@ -75,7 +75,7 @@ class Game():
 			self.DrawEntityMap()                #Layer 2
 
 			self.clock.tick(60) #limit the game to 60 frames per second
-
+			print(self.clock.get_fps())
 			pg.transform.scale(self.frame, (self.frameWidth*self.frameScale, self.frameHeight*self.frameScale)) #scales the screen surface
 			self.window.blit(self.frame, (self.player.position[0]*-self.tileSize+(self.frameWidth/2)-self.tileOffset, self.player.position[1]*-self.tileSize+(self.frameHeight/2)-self.tileOffset))
 
@@ -128,13 +128,13 @@ class Game():
 						self.keyDelay = 180 #reset the delay to 200 milliseconds
 						
 			elif self.pressedDown and self.pressedLeft: #if up is pressed
-				if 0 <= p[1]-1 and 0 <= p[0]-1: #if the space above is within bounds and
+				if 0 <= p[1]+1 and 0 <= p[0]-1: #if the space above is within bounds and
 					if self.map.tileMap[p[1]+1][p[0]-1].isPassable: #if the move is into something passable (without collision)
 						self.player.move((-1, 1)) #move the player up
 						self.keyDelay = 180 #reset the delay to 200 milliseconds
 						
 			elif self.pressedDown and self.pressedRight: #if up is pressed
-				if 0 <= p[1]-1 and len(self.map.tileMap[1]) > p[0]+1: #if the space above is within bounds and
+				if 0 <= p[1]+1 and len(self.map.tileMap[1]) > p[0]+1: #if the space above is within bounds and
 					if self.map.tileMap[p[1]+1][p[0]+1].isPassable: #if the move is into something passable (without collision)
 						self.player.move((1, 1)) #move the player up
 						self.keyDelay = 180 #reset the delay to 200 milliseconds
