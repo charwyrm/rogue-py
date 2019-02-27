@@ -1,31 +1,9 @@
 ﻿from __init__ import *
-from map import Map
+from map import *
 from entity import Entity
 
 class Game():
-	def __init__(self):
-		self.screenScale = 1
-		screenWidth, screenHeight = 128*self.screenScale, 64*self.screenScale
-		self.screen = pg.display.set_mode((screenWidth, screenHeight))
-
-		self.spr = {"error":pg.image.load(os.path.join("content", "error.bmp")).convert(),
-		"chest":pg.image.load(os.path.join("content", "chest.bmp")).convert(),
-		"door":pg.image.load(os.path.join("content", "door.bmp")).convert(),
-		"floor":pg.image.load(os.path.join("content", "floor.bmp")).convert(),
-		"gold":pg.image.load(os.path.join("content", "gold.bmp")).convert(),
-		"grass_ld":pg.image.load(os.path.join("content", "grass_ld.bmp")).convert(),
-		"grass_md":pg.image.load(os.path.join("content", "grass_md.bmp")).convert(),
-		"grass_hd":pg.image.load(os.path.join("content", "grass_hd.bmp")).convert(),
-		"ladder":pg.image.load(os.path.join("content", "ladder.bmp")).convert(),
-		"smile":pg.image.load(os.path.join("content", "smile.bmp")).convert(),
-		"stairs_dsc":pg.image.load(os.path.join("content", "stairs_dsc.bmp")).convert(),
-		"wall":pg.image.load(os.path.join("content", "wall.bmp")).convert()}
-
-		self.tileSize = 8*self.screenScale #sets the tilesize to 8 pixels
-		self.tileOffset = 4*self.screenScale #sets the offset to 4 pixels (so we can make the player central)
-
-		for i in self.spr:
-			self.spr[i] = pg.transform.scale(self.spr[i], (self.tileSize, self.tileSize))
+	def __init__(self, mapData):
 
 		self.clr = {"black":(0, 0, 0),
 		"dark gray":(63, 63, 63),
@@ -45,42 +23,63 @@ class Game():
 		"magenta":(255, 0, 255),
 		"pink":(255, 0, 127)}
 
-		self.player = Entity((7, 3), self.spr["smile"])
+		#128x64 = 16x8 tiles(1x)
+		#1440x900 = 180x113 tiles(1x), 90x57(2x), 60x38(3x), 45x29(4x)
+		#1920x1080 = 240x135 tiles
+
+		self.frameTileWidth, self.frameTileHeight = 16, 8
+		self.spriteResolution = 8
+		self.frameScale = 2
+		self.frameWidth, self.frameHeight = self.frameTileWidth*self.spriteResolution*self.frameScale, self.frameTileHeight*self.spriteResolution*self.frameScale
+		#os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"
+		self.window = pg.display.set_mode((self.frameWidth, self.frameHeight))#, pg.NOFRAME)
+		self.tileSize = 8*self.frameScale #sets the tilesize to 8 pixels
+		self.tileOffset = 4*self.frameScale #sets the offset to 4 pixels (so we can make the player central)
 		self.clock = pg.time.Clock() #creates a clock object, which can be used to interact with the FPS
 		self.keyDelay = 0 #keystrokes are registered straight away
 		self.isRunning = True
 		self.pressedUp, self.pressedDown, self.pressedLeft, self.pressedRight = False, False, False, False
 
-		mapData = [
-		"#######D#######",
-		"#.............#",
-		"#.c.........c.#",
-		"D........g.ggGD",
-		"#.H...g.g.g6<6#",
-		"#......g.gGG66#",
-	  "#######D#######"]
+		self.spr = {"error":pg.image.load(os.path.join("content", "error.png")).convert(),
+		"chest":pg.image.load(os.path.join("content", "chest.png")).convert(),
+		"door":pg.image.load(os.path.join("content", "door.png")).convert(),
+		"floor":pg.image.load(os.path.join("content", "floor.png")).convert(),
+		"gold":pg.image.load(os.path.join("content", "gold.png")).convert_alpha(),
+		"grass_ld":pg.image.load(os.path.join("content", "grass_ld.png")).convert(),
+		"grass_md":pg.image.load(os.path.join("content", "grass_md.png")).convert(),
+		"grass_hd":pg.image.load(os.path.join("content", "grass_hd.png")).convert(),
+		"ladder":pg.image.load(os.path.join("content", "ladder.png")).convert(),
+		"player":pg.image.load(os.path.join("content", "player.png")).convert_alpha(),
+		"stairs_dsc":pg.image.load(os.path.join("content", "stairs_dsc.png")).convert(),
+		"wall":pg.image.load(os.path.join("content", "wall.png")).convert(),
+		"wallside":pg.image.load(os.path.join("content", "wallside.png")).convert(),
+		"road":pg.image.load(os.path.join("content", "road.png")).convert()}
 
-		self.map = Map(mapData) #creates an instance of map using the current map data
+		for i in self.spr:
+			self.spr[i] = pg.transform.scale(self.spr[i], (self.tileSize, self.tileSize))
+
+		self.player = Entity((64, 59), self.spr["player"])
+		self.map = TileMap(mapData) #creates an instance of map using the current map data
+		#self.map.Shade() - Used with some texture packs
+		self.frame = pg.Surface((len(self.map.tileMap[1])*self.tileSize,len(self.map.tileMap)*self.tileSize))
 
 	def run(self):
 
 		while self.isRunning:
-			self.DrawMap()#draws the map to the screen
-			#self.DrawEntities() #coming soon - will draw entities to the screen
-			self.screen.blit(self.player.sprite, self.player.GetPosition(self.tileSize, self.tileOffset)) #blits the player to the screen surface at the player's current position
-
-			#for y in range (0, round(self.screen.get_height()/self.tileSize)*2+1): #for every row of tiles
-			#	for x in range (0, round(self.screen.get_height()/self.tileSize)*2+1): #for every column of tiles within said rows
-			#		self.screen.set_at(((x*self.tileSize)+self.tileOffset, (y*self.tileSize)+self.tileOffset), (255, 0, 0)) #draw a red pixel at the top-left of the tile
-	
 			self.CheckInput() #checks for keys that are pressed or released and sets values accordingly
 			self.ProcessInput() #acts upon the pressed keys' values
 
-			print("{}fps, player at {}".format((round(self.clock.get_fps())), self.player.position)) #print the FPS to the console
+			self.window.fill(self.clr["black"]) #clears the window
+			self.frame.fill(self.clr["black"])  #Layer 0
+			self.DrawTileMap()                  #Layer 1
+			self.DrawEntityMap()                #Layer 2
+
 			self.clock.tick(60) #limit the game to 60 frames per second
-			pg.transform.scale(self.screen, (256, 128))
-			pg.display.flip() #update all displays
-			self.screen.fill(self.clr["black"]) #wipe the screen to black, so none of the previous frame remains
+
+			pg.transform.scale(self.frame, (self.frameWidth*self.frameScale, self.frameHeight*self.frameScale)) #scales the screen surface
+			self.window.blit(self.frame, (self.player.position[0]*-self.tileSize+(self.frameWidth/2)-self.tileOffset, self.player.position[1]*-self.tileSize+(self.frameHeight/2)-self.tileOffset))
+
+			pg.display.flip() #update window
 
 	def CheckInput(self):
 		for event in pg.event.get(): #for every event in the event queue
@@ -107,38 +106,67 @@ class Game():
 					self.pressedLeft = False #move the player left
 				elif event.key == pg.K_d: #otherwise, if said key is d
 					self.pressedRight = False #move the player right
-				self.keyDelay = 0
+				else:
+					self.keyDelay = 0
 
 	def ProcessInput(self):
 		p = self.player.position #just a temporary variable to stop the code from being too verbose
 		self.keyDelay -= self.clock.get_time() #decreases the delay by the milliseconds since the last frame
 
 		if self.keyDelay <= 0: #if the delay is over
-			if self.pressedUp: #if up is pressed
-				if not p[1]-1 <= -1: #if the space above is within bounds and
+			
+			if self.pressedUp and self.pressedLeft: #if up is pressed
+				if 0 <= p[1]-1 and 0 <= p[0]-1: #if the space above is within bounds and
+					if self.map.tileMap[p[1]-1][p[0]-1].isPassable: #if the move is into something passable (without collision)
+						self.player.move((-1, -1)) #move the player up
+						self.keyDelay = 180 #reset the delay to 200 milliseconds
+						
+			elif self.pressedUp and self.pressedRight: #if up is pressed
+				if 0 <= p[1]-1 and len(self.map.tileMap[1]) > p[0]+1: #if the space above is within bounds and
+					if self.map.tileMap[p[1]-1][p[0]+1].isPassable: #if the move is into something passable (without collision)
+						self.player.move((1, -1)) #move the player up
+						self.keyDelay = 180 #reset the delay to 200 milliseconds
+						
+			elif self.pressedDown and self.pressedLeft: #if up is pressed
+				if 0 <= p[1]-1 and 0 <= p[0]-1: #if the space above is within bounds and
+					if self.map.tileMap[p[1]+1][p[0]-1].isPassable: #if the move is into something passable (without collision)
+						self.player.move((-1, 1)) #move the player up
+						self.keyDelay = 180 #reset the delay to 200 milliseconds
+						
+			elif self.pressedDown and self.pressedRight: #if up is pressed
+				if 0 <= p[1]-1 and len(self.map.tileMap[1]) > p[0]+1: #if the space above is within bounds and
+					if self.map.tileMap[p[1]+1][p[0]+1].isPassable: #if the move is into something passable (without collision)
+						self.player.move((1, 1)) #move the player up
+						self.keyDelay = 180 #reset the delay to 200 milliseconds
+						
+			elif self.pressedUp: #if up is pressed
+				if 0 <= p[1]-1: #if the space above is within bounds and
 					if self.map.tileMap[p[1]-1][p[0]].isPassable: #if the move is into something passable (without collision)
 						self.player.move((0, -1)) #move the player up
-						self.keyDelay = 200 #reset the delay to 200 milliseconds
+						self.keyDelay = 180 #reset the delay to 200 milliseconds
 
-			if self.pressedDown: #if down is pressed
-				if not p[1]+1 >= 7: #if the space below is within bounds and
+			elif self.pressedDown: #if down is pressed
+				if len(self.map.tileMap) > p[1]+1: #if the space below is within bounds and
 					if self.map.tileMap[p[1]+1][p[0]].isPassable: #if the move is into something passable (without collision)
 						self.player.move((0, 1)) #move the player down
-						self.keyDelay = 200 #reset the delay to 200 milliseconds
+						self.keyDelay = 180 #reset the delay to 200 milliseconds
 
-			if self.pressedLeft: #if left is pressed
-				if not p[0]-1 <= -1: #if the space to the left is within bounds and
+			elif self.pressedLeft: #if left is pressed
+				if 0 <= p[0]-1: #if the space to the left is within bounds and
 					if self.map.tileMap[p[1]][p[0]-1].isPassable: #if the move is into something passable (without collision)
 						self.player.move((-1, 0)) #move the player left
-						self.keyDelay = 200 #reset the delay to 200 milliseconds
+						self.keyDelay = 180 #reset the delay to 200 milliseconds
 
-			if self.pressedRight: #if right is pressed
-				if not p[0]+1 >= 15: #if the space to the right is within bounds and
+			elif self.pressedRight: #if right is pressed
+				if len(self.map.tileMap[1]) > p[0]+1: #if the space to the right is within bounds and
 					if self.map.tileMap[p[1]][p[0]+1].isPassable: #if the move is into something passable (without collision)
 						self.player.move((1, 0)) #move the player right
-						self.keyDelay = 200 #reset the delay to 200 milliseconds
+						self.keyDelay = 180 #reset the delay to 200 milliseconds
 
-	def DrawMap(self):
-		for y in self.map.tileMap: #for every row in map.map
-			for x in y: #for every position in that row
-				self.screen.blit(self.spr[x.name], x.GetPosition(self.tileSize, self.tileOffset)) #blit that tile's sprite to it's screen position
+	def DrawTileMap(self):
+		for y in range (max(self.player.position[1]-round(self.frameTileHeight/2)-1, 0), min(self.player.position[1]+round(self.frameTileHeight/2)+1, len(self.map.tileMap))):
+			for x in range (max(self.player.position[0]-round(self.frameTileWidth/2)-1, 0), min(self.player.position[0]+round(self.frameTileWidth/2)+1, len(self.map.tileMap[0]))):
+				self.frame.blit(self.spr[self.map.tileMap[y][x].name], self.map.tileMap[y][x].GetPosition(self.tileSize))
+	def DrawEntityMap(self):
+		for i in Entity.Instances:
+			self.frame.blit(i.sprite, i.GetPosition(self.tileSize))

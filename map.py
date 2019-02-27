@@ -1,7 +1,9 @@
 from __init__ import *
 from tile import Tile
+from entity import Entity
+from container import Container
 
-class Map:
+class TileMap:
 	def __init__(self, mapData):
 		self.Update(mapData)
 
@@ -19,3 +21,14 @@ class Map:
 			x = 0
 			y += 1
 		self.tileMap = returnArray
+	def Shade(self):
+		xpos, ypos = 0, 0
+		for y in self.tileMap:
+			for x in y:
+				if x.name == "wall":
+					if self.tileMap[ypos+1][xpos].isPassable:
+						x.name = "wallside"
+				xpos+=1
+			xpos=0
+			ypos+=1
+		
