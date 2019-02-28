@@ -1,7 +1,7 @@
 from __init__ import *
 class Container():
 	
-	def __init__(self, position): #the class constructor, which takes an x and y value
+	def __init__(self): #the class constructor, which takes an x and y value
 		self.contents = {}
 		
 	def AddItem(self, item):

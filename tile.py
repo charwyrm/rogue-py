@@ -5,6 +5,7 @@ class Tile():
 	def __init__(self, symbol, position):
 		self.symbol = symbol
 		self.position = position
+		self.rect = pg.Rect(position[0]*8, position[1]*8, TILESIZE, TILESIZE)
 		self.Assign()
 
 	def Assign(self):
@@ -14,7 +15,7 @@ class Tile():
 
 		elif self.symbol == 'c':# CHEST
 			self.name = "chest"
-			self.container = Container(self.position)
+			self.container = Container()
 			self.isPassable = False
 
 		elif self.symbol == ',':# RANDOM DENSITY GRASS
@@ -58,5 +59,5 @@ class Tile():
 			self.name = "error"
 			self.isPassable = False
 
-	def GetPosition(self, tileSize): #Returns the Pixel position of the tile
-		return (self.position[0]*tileSize, self.position[1]*tileSize) #modifies each position by setting it to a tile sized grid
+	def GetPosition(self): #Returns the Pixel position of the tile
+		return (self.position[0]*TILESIZE, self.position[1]*TILESIZE) #modifies each position by setting it to a tile sized grid
